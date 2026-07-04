@@ -48,8 +48,7 @@ export default function CotizadorMotoenvios() {
   
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
-  const [tramiteEspera, setTramiteEspera] = useState(false);
-  const [lluvia, setLluvia] = useState(false);
+  const [tramiteEspera, setTramiteEspera] = useState("ninguno"); // "ninguno" | "corto" | "largo"
 
   // ERRORES DE VALIDACIÓN
   const [errors, setErrors] = useState({
@@ -81,15 +80,12 @@ export default function CotizadorMotoenvios() {
       subtotal1 += recargoIdaVuelta;
     }
 
-    // Si (Trámites) -> Subtotal_1 += 1500
-    const recargoTramites = tramiteEspera ? 1500 : 0;
-    if (tramiteEspera) {
-      subtotal1 += recargoTramites;
-    }
+    // Si (Trámites) -> Subtotal_1 += Costo_Tramites
+    const recargoTramites = tramiteEspera === "corto" ? 1500 : tramiteEspera === "largo" ? 3000 : 0;
+    subtotal1 += recargoTramites;
 
-    // Si (Lluvia) -> Total_Final = Subtotal_1 * 1.5
-    const recargoLluvia = lluvia ? subtotal1 * 0.5 : 0;
-    const totalFinal = lluvia ? subtotal1 * 1.5 : subtotal1;
+    const totalFinal = subtotal1;
+    const totalConLluvia = subtotal1 * 1.5;
 
     return {
       precioBase,
@@ -97,10 +93,10 @@ export default function CotizadorMotoenvios() {
       costoBulto,
       recargoIdaVuelta,
       recargoTramites,
-      recargoLluvia,
       totalFinal: Math.round(totalFinal),
+      totalConLluvia: Math.round(totalConLluvia),
     };
-  }, [zonaSeleccionada, distanciaKm, bultoSeleccionado, esIdaYVuelta, tramiteEspera, lluvia]);
+  }, [zonaSeleccionada, distanciaKm, bultoSeleccionado, esIdaYVuelta, tramiteEspera]);
 
   // ENVIAR A WHATSAPP
   const handleSubmit = (e) => {
@@ -128,8 +124,8 @@ export default function CotizadorMotoenvios() {
     // Construcción del template de WhatsApp según especificación
     const bultoLabel = bultoSeleccionado.label.toUpperCase();
     const txtIdaVuelta = esIdaYVuelta ? "SÍ (+50%)" : "NO";
-    const txtTramite = tramiteEspera ? "SÍ ($1500)" : "NO";
-    const txtLluvia = lluvia ? "SÍ (+50%)" : "NO";
+    const txtTramite = tramiteEspera === "corto" ? "SÍ ($1500 - HASTA 15 MIN)" : tramiteEspera === "largo" ? "SÍ ($3000 - HASTA 30 MIN)" : "NO";
+    const txtLluvia = "Sujeto a clima (+50% si llueve)";
     const totalFormateado = calculoTarifa.totalFinal.toLocaleString("es-AR");
 
     const mensaje = `🏍️ *NUEVO PEDIDO DE ENVÍO*
@@ -401,71 +397,70 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                 </div>
               </button>
 
-              {/* TRÁMITES / ESPERA */}
-              <button
-                type="button"
-                onClick={() => setTramiteEspera(!tramiteEspera)}
-                className={`flex items-center justify-between p-4 rounded-xl border text-left active:scale-[0.98] transition-all duration-200 ${
-                  tramiteEspera
-                    ? "bg-zinc-800/40 border-emerald-500/40 text-zinc-100"
-                    : "bg-zinc-950/20 border-zinc-800/60 text-zinc-400"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${tramiteEspera ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-900 text-zinc-500"}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4.5 h-4.5">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-sm block">Trámites / Espera</span>
-                    <span className="text-xs text-zinc-500">Costo fijo de espera de 15 minutos</span>
-                  </div>
+              {/* TRÁMITES / ESPERA (Pills de selección única) */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs text-zinc-400 font-medium flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-zinc-500">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  Trámites o Espera en Origen/Destino
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTramiteEspera("ninguno")}
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                      tramiteEspera === "ninguno"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    <span>Sin Espera</span>
+                    <span className="text-[9px] text-zinc-500 font-mono">$0</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTramiteEspera("corto")}
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                      tramiteEspera === "corto"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    <span>Hasta 15 min</span>
+                    <span className="text-[9px] text-zinc-500 font-mono">+$1.500</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTramiteEspera("largo")}
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                      tramiteEspera === "largo"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    <span>Hasta 30 min</span>
+                    <span className="text-[9px] text-zinc-500 font-mono">+$3.000</span>
+                  </button>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`font-mono text-xs ${tramiteEspera ? "text-emerald-400" : "text-zinc-500"}`}>
-                    +$1.500
-                  </span>
-                  <div className={`w-8 h-4 rounded-full transition-colors relative ${tramiteEspera ? "bg-emerald-500" : "bg-zinc-800"}`}>
-                    <div className={`w-3.5 h-3.5 bg-zinc-950 rounded-full absolute top-[1px] transition-transform ${tramiteEspera ? "translate-x-[15px]" : "translate-x-[1px]"}`} />
-                  </div>
-                </div>
-              </button>
+              </div>
 
-              {/* RECARGO POR LLUVIA */}
-              <button
-                type="button"
-                onClick={() => setLluvia(!lluvia)}
-                className={`flex items-center justify-between p-4 rounded-xl border text-left active:scale-[0.98] transition-all duration-200 ${
-                  lluvia
-                    ? "bg-zinc-800/40 border-emerald-500/40 text-zinc-100"
-                    : "bg-zinc-950/20 border-zinc-800/60 text-zinc-400"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${lluvia ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-900 text-zinc-500"}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4.5 h-4.5">
-                      <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" />
-                      <line x1="8" y1="16" x2="8" y2="20" />
-                      <line x1="12" y1="18" x2="12" y2="22" />
-                      <line x1="16" y1="16" x2="16" y2="20" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-sm block">Recargo por Lluvia</span>
-                    <span className="text-xs text-zinc-500">Agrega +50% obligatorio sobre el total</span>
-                  </div>
+              {/* RECARGO POR LLUVIA (Informativo) */}
+              <div className="flex items-center gap-3.5 p-4 rounded-xl border border-zinc-800/60 bg-zinc-950/20 text-zinc-400 text-xs leading-relaxed">
+                <div className="p-2 rounded-lg bg-zinc-900 text-zinc-500 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4.5 h-4.5">
+                    <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" />
+                    <line x1="8" y1="16" x2="8" y2="20" />
+                    <line x1="12" y1="18" x2="12" y2="22" />
+                    <line x1="16" y1="16" x2="16" y2="20" />
+                  </svg>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`font-mono text-xs ${lluvia ? "text-emerald-400" : "text-zinc-500"}`}>
-                    {lluvia ? `+$${calculoTarifa.recargoLluvia.toLocaleString("es-AR")}` : "+50%"}
-                  </span>
-                  <div className={`w-8 h-4 rounded-full transition-colors relative ${lluvia ? "bg-emerald-500" : "bg-zinc-800"}`}>
-                    <div className={`w-3.5 h-3.5 bg-zinc-950 rounded-full absolute top-[1px] transition-transform ${lluvia ? "translate-x-[15px]" : "translate-x-[1px]"}`} />
-                  </div>
+                <div className="flex-1">
+                  <span className="font-semibold text-zinc-300 block">Aviso Climatológico</span>
+                  En días de lluvia, se aplicará de forma obligatoria un **recargo del +50%** sobre el total final del viaje al momento de realizar el envío.
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -519,30 +514,28 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                 </span>
               </div>
             )}
-            {tramiteEspera && (
+            {tramiteEspera !== "ninguno" && (
               <div className="flex justify-between items-center">
-                <span>Trámites / Espera:</span>
+                <span>Trámites / Espera ({tramiteEspera === "corto" ? "Hasta 15 min" : "Hasta 30 min"}):</span>
                 <span className="font-mono text-zinc-300 font-semibold">
-                  +$1.500
-                </span>
-              </div>
-            )}
-            {lluvia && (
-              <div className="flex justify-between items-center text-emerald-400/90 font-medium">
-                <span>Recargo por Lluvia (+50%):</span>
-                <span className="font-mono font-semibold">
-                  +${calculoTarifa.recargoLluvia.toLocaleString("es-AR")}
+                  +${calculoTarifa.recargoTramites.toLocaleString("es-AR")}
                 </span>
               </div>
             )}
           </div>
 
           {/* TOTAL ESTIMADO */}
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm font-bold text-zinc-400">TOTAL ESTIMADO:</span>
-            <span className="font-mono text-3xl md:text-4xl font-extrabold text-emerald-400 tracking-tight">
-              ${calculoTarifa.totalFinal.toLocaleString("es-AR")}
-            </span>
+          <div className="flex flex-col gap-1 border-t border-zinc-800/80 pt-4">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-bold text-zinc-400">TOTAL ESTIMADO:</span>
+              <span className="font-mono text-3xl md:text-4xl font-extrabold text-emerald-400 tracking-tight">
+                ${calculoTarifa.totalFinal.toLocaleString("es-AR")}
+              </span>
+            </div>
+            <div className="flex justify-between text-[11px] text-zinc-500 font-medium">
+              <span>* Con lluvia (sujeto a clima):</span>
+              <span className="font-mono">${calculoTarifa.totalConLluvia.toLocaleString("es-AR")}</span>
+            </div>
           </div>
 
           {/* BOTÓN WHATSAPP */}
