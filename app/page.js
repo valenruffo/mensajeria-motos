@@ -458,7 +458,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                 </div>
                 <div className="flex-1">
                   <span className="font-semibold text-zinc-300 block">Aviso Climatológico</span>
-                  En días de lluvia, se aplicará de forma obligatoria un **recargo del +50%** sobre el total final del viaje al momento de realizar el envío.
+                  En días de lluvia, se aplicará de forma obligatoria un <strong className="font-semibold text-zinc-200">recargo del +50%</strong> sobre el total final del viaje al momento de realizar el envío.
                 </div>
               </div>
             </div>
