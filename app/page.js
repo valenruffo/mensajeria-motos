@@ -309,33 +309,33 @@ export default function CotizadorMotoenvios() {
 
     const fechaFormateada = formatFecha(fechaEnvio) || "No especificada";
 
-    const mensaje = `🏍️ *NUEVO PEDIDO DE ENVÍO*
-👤 *Cliente:* ${nombreCompleto.trim()}
+    const mensaje = `*-- NUEVO PEDIDO DE ENVIO --*
+*Cliente:* ${nombreCompleto.trim()}
 
-📍 *HOJA DE RUTA:*
-• 📅 *Fecha del envío:* ${fechaFormateada}
-• 🕒 *Retirar desde:* ${horaInicio}
-• 🟢 *Origen/Retiro:* ${origen.trim()}
-• 🔴 *Destino/Entrega:* ${destino.trim()}
+*HOJA DE RUTA:*
+- *Fecha:* ${fechaFormateada}
+- *Retirar desde:* ${horaInicio}
+- *Origen/Retiro:* ${origen.trim()}
+- *Destino/Entrega:* ${destino.trim()}
 
-💵 *PAGO Y LOGÍSTICA:*
-• 💰 *Lugar de Pago:* ${txtLugarPago}
-• 💳 *Medio:* ${txtMedioPago}
+*PAGO Y LOGISTICA:*
+- *Lugar de Pago:* ${txtLugarPago}
+- *Medio:* ${txtMedioPago}
 
-📦 *DETALLE DEL PAQUETE:*
-• *Tipo:* ${bultoLabel}
-• *Notas/Contacto:* ${notas.trim() || "Ninguna"}
+*DETALLE DEL PAQUETE:*
+- *Tipo:* ${bultoLabel}
+- *Notas/Contacto:* ${notas.trim() || "Ninguna"}
 
-⚡ *ADICIONALES APLICADOS:*
-• 🔄 *Ida y Vuelta:* ${txtIdaVuelta}
-• ⏱️ *Trámite o Espera:* ${txtTramite}
-• 🌧️ *Recargo por Lluvia:* ${txtLluvia}
+*ADICIONALES:*
+- *Ida y Vuelta:* ${txtIdaVuelta}
+- *Tramite o Espera:* ${txtTramite}
+- *Recargo por Lluvia:* ${txtLluvia}
 
-💵 *COTIZACIÓN DE LA WEB:*
-• *Total Estimado:* *$${totalFormateado}*
+*COTIZACION DE LA WEB:*
+- *Total Estimado: $${totalFormateado}*
 
 ---
-_Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios en la ruta de viaje._`;
+_Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta._`;
 
     // Redirección directa por WhatsApp
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`;
