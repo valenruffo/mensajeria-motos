@@ -71,6 +71,13 @@ export default function CotizadorMotoenvios() {
   const [fechaEnvio, setFechaEnvio] = useState(defaultDate);
   const [horaInicio, setHoraInicio] = useState("Lo antes posible (Ya mismo)");
 
+  const startMonth = useMemo(() => new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1), [startOfToday]);
+  const endMonth = useMemo(() => {
+    const next = new Date(startOfToday);
+    next.setMonth(next.getMonth() + 1);
+    return new Date(next.getFullYear(), next.getMonth(), 1);
+  }, [startOfToday]);
+
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
   const [tramiteEspera, setTramiteEspera] = useState("ninguno"); // "ninguno" | "corto" | "largo"
@@ -390,21 +397,78 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               Programación del Envío
             </h2>
             
-            <div className="flex flex-col items-center justify-center p-4 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full">
+            <div className="flex flex-col items-center justify-center p-4 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full relative">
+              <style>{`
+                .rdp-root {
+                  --rdp-accent-color: #10b981 !important; /* Emerald-500 */
+                  --rdp-background-color: #151515 !important;
+                }
+                /* Corregir los botones de navegación */
+                .rdp-button_previous, .rdp-button_next, .rdp-nav_button, 
+                button[name="previous-month"], button[name="next-month"] {
+                  position: relative !important;
+                  display: inline-flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  background: #1c1c1e !important;
+                  border: 1px solid #27272a !important; /* border-zinc-800 */
+                  border-radius: 8px !important;
+                  color: #a1a1aa !important; /* text-zinc-400 */
+                  cursor: pointer !important;
+                  transition: all 0.2s !important;
+                  opacity: 1 !important;
+                  pointer-events: auto !important;
+                }
+
+                .rdp-button_previous:hover, .rdp-button_next:hover {
+                  background: #27272a !important;
+                  color: #f4f4f5 !important;
+                  border-color: #3f3f46 !important;
+                }
+
+                .rdp-button_previous:disabled, .rdp-button_next:disabled {
+                  opacity: 0.15 !important;
+                  cursor: not-allowed !important;
+                  background: transparent !important;
+                }
+
+                .rdp-chevron {
+                  fill: none !important;
+                  stroke: currentColor !important;
+                  stroke-width: 2.5px !important;
+                  width: 14px !important;
+                  height: 14px !important;
+                  color: inherit !important;
+                  display: inline-block !important;
+                }
+
+                .rdp-nav {
+                  position: absolute !important;
+                  right: 16px !important;
+                  top: 16px !important;
+                  display: flex !important;
+                  gap: 8px !important;
+                  z-index: 10 !important;
+                }
+              `}</style>
               <DayPicker
                 mode="single"
                 selected={fechaEnvio}
                 onSelect={(date) => date && setFechaEnvio(date)}
                 disabled={disabledDays}
+                startMonth={startMonth}
+                endMonth={endMonth}
                 locale={es}
                 classNames={{
                   months: "flex flex-col sm:flex-row gap-4 justify-center w-full",
                   month: "space-y-4 w-full",
                   month_caption: "flex justify-center pt-1 relative items-center mb-2",
                   caption_label: "text-sm font-semibold text-zinc-100 capitalize",
-                  nav: "space-x-1 flex items-center absolute right-0 top-0",
-                  button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-zinc-400 hover:text-zinc-100 flex items-center justify-center rounded-lg border border-zinc-800 transition-colors cursor-pointer",
-                  button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-zinc-400 hover:text-zinc-100 flex items-center justify-center rounded-lg border border-zinc-800 transition-colors cursor-pointer",
+                  nav: "rdp-nav",
                   weekdays: "flex justify-between w-full border-b border-zinc-800/50 pb-2",
                   weekday: "text-zinc-500 rounded-md w-9 font-semibold text-[10px] text-center uppercase tracking-wider",
                   week: "flex w-full mt-1.5 gap-1 justify-between",
