@@ -1,10 +1,21 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+
+// Helpers de fecha (sin date-fns para no depender de la librería)
+const DIAS_SEMANA = ["LU", "MA", "MI", "JU", "VI", "SÁ", "DO"];
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DIAS_SEMANA_LARGO = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+
+function formatFecha(date) {
+  if (!date) return "";
+  const dia = DIAS_SEMANA_LARGO[date.getDay()];
+  return `${dia.charAt(0).toUpperCase() + dia.slice(1)}, ${date.getDate()} de ${MESES[date.getMonth()]}`;
+}
+
+function isSameDay(a, b) {
+  return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
 
 // CONFIGURACIÓN CONSTANTE (Fuente de verdad)
 const configAdmin = {
@@ -45,6 +56,126 @@ const CATEGORIAS_BULTO = [
   },
 ];
 
+// ─── COMPONENTE CALENDARIO CUSTOM ───────────────────────────────────────────
+function MiniCalendar({ selected, onSelect }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // viewMonth = primer día del mes que se está mostrando
+  const [viewYear, setViewYear]   = React.useState(selected ? selected.getFullYear() : today.getFullYear());
+  const [viewMonth, setViewMonth] = React.useState(selected ? selected.getMonth()    : today.getMonth());
+
+  // Límites: mes actual y mes siguiente
+  const minYear  = today.getFullYear();
+  const minMonth = today.getMonth();
+  const maxYear  = minMonth === 11 ? minYear + 1 : minYear;
+  const maxMonth = minMonth === 11 ? 0 : minMonth + 1;
+
+  const canPrev = !(viewYear === minYear && viewMonth === minMonth);
+  const canNext = !(viewYear === maxYear && viewMonth === maxMonth);
+
+  function prevMonth() {
+    if (!canPrev) return;
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (!canNext) return;
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  // Generar celdas del calendario (grid lunes-domingo)
+  const cells = React.useMemo(() => {
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    // día de la semana del primer día (0=Dom → ajustar a lun-dom)
+    const startDow = (firstDay.getDay() + 6) % 7; // 0=Lun
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const grid = [];
+    // celdas vacías antes del día 1
+    for (let i = 0; i < startDow; i++) grid.push(null);
+    for (let d = 1; d <= daysInMonth; d++) grid.push(new Date(viewYear, viewMonth, d));
+    // rellenar hasta completar múltiplo de 7
+    while (grid.length % 7 !== 0) grid.push(null);
+    return grid;
+  }, [viewYear, viewMonth]);
+
+  return (
+    <div className="bg-[#141414] border border-zinc-800/80 rounded-2xl p-4 w-full select-none">
+      {/* Cabecera: mes y flechas */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={prevMonth}
+          disabled={!canPrev}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <span className="text-sm font-bold text-zinc-100 capitalize tracking-wide">
+          {MESES[viewMonth]} {viewYear}
+        </span>
+
+        <button
+          type="button"
+          onClick={nextMonth}
+          disabled={!canNext}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      {/* Días de semana */}
+      <div className="grid grid-cols-7 mb-1">
+        {DIAS_SEMANA.map(d => (
+          <div key={d} className="text-center text-[10px] font-bold text-zinc-600 uppercase tracking-wider py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Celdas de días */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`e-${i}`} />;
+          const isToday    = isSameDay(date, today);
+          const isSelected = isSameDay(date, selected);
+          const isPast     = date < today;
+          return (
+            <button
+              key={date.toISOString()}
+              type="button"
+              disabled={isPast}
+              onClick={() => onSelect(date)}
+              className={[
+                "relative h-9 w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150",
+                isPast     ? "text-zinc-700 cursor-not-allowed" : "",
+                isSelected ? "bg-emerald-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(16,185,129,.35)]" : "",
+                !isSelected && !isPast ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer" : "",
+              ].join(" ")}
+            >
+              {date.getDate()}
+              {isToday && !isSelected && (
+                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Fecha seleccionada */}
+      {selected && (
+        <div className="mt-3 pt-3 border-t border-zinc-800/60 flex items-center justify-center gap-1.5">
+          <span className="text-sm">📅</span>
+          <span className="text-xs text-zinc-400">Programado para el:</span>
+          <span className="text-xs font-semibold text-emerald-400">{formatFecha(selected)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function CotizadorMotoenvios() {
   // ESTADOS DEL FORMULARIO
   const [nombreCompleto, setNombreCompleto] = useState("");
@@ -70,13 +201,6 @@ export default function CotizadorMotoenvios() {
 
   const [fechaEnvio, setFechaEnvio] = useState(defaultDate);
   const [horaInicio, setHoraInicio] = useState("Lo antes posible (Ya mismo)");
-
-  const startMonth = useMemo(() => new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1), [startOfToday]);
-  const endMonth = useMemo(() => {
-    const next = new Date(startOfToday);
-    next.setMonth(next.getMonth() + 1);
-    return new Date(next.getFullYear(), next.getMonth(), 1);
-  }, [startOfToday]);
 
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
@@ -183,7 +307,7 @@ export default function CotizadorMotoenvios() {
     const txtLugarPago = lugarPago === "retiro" ? "PAGA EN RETIRO (ORIGEN)" : "PAGA EN ENTREGA (DESTINO)";
     const txtMedioPago = medioPago === "efectivo" ? "EFECTIVO" : "MERCADO PAGO / TRANSFERENCIA";
 
-    const fechaFormateada = fechaEnvio ? format(fechaEnvio, "EEEE, d 'de' MMMM", { locale: es }) : "No especificada";
+    const fechaFormateada = formatFecha(fechaEnvio) || "No especificada";
 
     const mensaje = `🏍️ *NUEVO PEDIDO DE ENVÍO*
 👤 *Cliente:* ${nombreCompleto.trim()}
@@ -418,121 +542,9 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               Programación del Envío
             </h2>
             
-            <div className="flex flex-col items-center justify-center p-5 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full relative">
-              <style>{`
-                .rdp-root {
-                  --rdp-accent-color: #10b981 !important; /* Emerald-500 */
-                  --rdp-background-color: #151515 !important;
-                  width: 100%;
-                }
-                
-                .rdp-month_caption {
-                  position: relative !important;
-                  display: flex !important;
-                  justify-content: center !important;
-                  align-items: center !important;
-                  margin-bottom: 20px !important;
-                  padding: 0 !important;
-                  height: 36px !important;
-                }
+            <MiniCalendar selected={fechaEnvio} onSelect={setFechaEnvio} />
 
-                .rdp-caption_label {
-                  font-size: 0.95rem !important;
-                  font-weight: 700 !important;
-                  color: #f4f4f5 !important;
-                  text-transform: capitalize !important;
-                  z-index: 10;
-                }
 
-                .rdp-nav {
-                  position: absolute !important;
-                  inset: 0 !important;
-                  display: flex !important;
-                  justify-content: space-between !important;
-                  align-items: center !important;
-                  pointer-events: none !important;
-                  z-index: 20;
-                }
-
-                .rdp-nav button {
-                  pointer-events: auto !important;
-                  display: inline-flex !important;
-                  align-items: center !important;
-                  justify-content: center !important;
-                  width: 36px !important;
-                  height: 36px !important;
-                  background: #18181b !important; /* zinc-900 */
-                  border: 1px solid #27272a !important; /* zinc-800 */
-                  border-radius: 10px !important;
-                  color: #a1a1aa !important; /* zinc-400 */
-                  cursor: pointer !important;
-                  transition: all 0.2s ease !important;
-                }
-
-                .rdp-nav button:hover:not(:disabled) {
-                  background: #27272a !important; /* zinc-800 */
-                  color: #f4f4f5 !important; /* zinc-100 */
-                  border-color: #3f3f46 !important; /* zinc-700 */
-                }
-
-                .rdp-nav button:disabled {
-                  opacity: 0.25 !important;
-                  cursor: not-allowed !important;
-                }
-
-                .rdp-chevron {
-                  fill: none !important;
-                  stroke: currentColor !important;
-                  stroke-width: 2.5px !important;
-                  width: 16px !important;
-                  height: 16px !important;
-                }
-                
-                /* Esconder flechas default del navegador de los number inputs */
-                input[type="number"]::-webkit-outer-spin-button,
-                input[type="number"]::-webkit-inner-spin-button {
-                  -webkit-appearance: none;
-                  margin: 0;
-                }
-                input[type="number"] {
-                  -moz-appearance: textfield;
-                }
-              `}</style>
-              <DayPicker
-                mode="single"
-                selected={fechaEnvio}
-                onSelect={(date) => date && setFechaEnvio(date)}
-                disabled={disabledDays}
-                startMonth={startMonth}
-                endMonth={endMonth}
-                locale={es}
-                classNames={{
-                  months: "flex flex-col sm:flex-row gap-4 justify-center w-full",
-                  month: "space-y-4 w-full",
-                  month_caption: "flex justify-center pt-1 relative items-center mb-2",
-                  caption_label: "text-sm font-semibold text-zinc-100 capitalize",
-                  nav: "rdp-nav",
-                  weekdays: "flex justify-between w-full border-b border-zinc-800/50 pb-2",
-                  weekday: "text-zinc-500 rounded-md w-9 font-semibold text-[10px] text-center uppercase tracking-wider",
-                  week: "flex w-full mt-1.5 gap-1 justify-between",
-                  day: "h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center rounded-lg text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-all font-medium cursor-pointer",
-                  today: "underline decoration-2 underline-offset-4 text-emerald-400 font-bold",
-                  selected: "bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 hover:text-zinc-950 rounded-lg",
-                  disabled: "text-zinc-700 opacity-20 cursor-not-allowed hover:bg-transparent hover:text-zinc-700",
-                  outside: "text-zinc-600 opacity-40",
-                }}
-              />
-              
-              {fechaEnvio && (
-                <div className="text-xs text-zinc-400 mt-4 text-center font-medium border-t border-zinc-800/50 pt-3 w-full flex items-center justify-center gap-1.5">
-                  <span>📅</span>
-                  <span>Programado para el:</span>
-                  <span className="text-emerald-400 capitalize font-semibold">
-                    {format(fechaEnvio, "EEEE, d 'de' MMMM", { locale: es })}
-                  </span>
-                </div>
-              )}
-            </div>
 
             {/* HORA DE INICIO */}
             <div className="flex flex-col gap-1.5">
