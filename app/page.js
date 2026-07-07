@@ -377,13 +377,15 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               <div className="text-xs text-zinc-400 flex-1 leading-snug">
                 ¿Tenés el kilometraje exacto? Ajustalo manualmente:
               </div>
-              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden h-8">
+              <div className="flex items-center bg-[#151515] border border-zinc-800 rounded-lg overflow-hidden h-9 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setDistanciaKm((prev) => Math.max(1, prev - 1))}
-                  className="w-8 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors border-r border-zinc-800/80 font-bold cursor-pointer select-none active:bg-zinc-850"
+                  className="w-10 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors border-r border-zinc-800/80 cursor-pointer active:bg-zinc-700"
                 >
-                  —
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M5 12h14" />
+                  </svg>
                 </button>
                 <input
                   type="number"
@@ -394,14 +396,17 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     const val = Math.max(1, Number(e.target.value));
                     setDistanciaKm(val);
                   }}
-                  className="w-12 text-center bg-transparent border-0 text-sm font-semibold text-zinc-100 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-12 text-center bg-transparent border-0 text-sm font-bold text-zinc-100 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
                   type="button"
                   onClick={() => setDistanciaKm((prev) => Math.min(200, prev + 1))}
-                  className="w-8 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors border-l border-zinc-800/80 font-bold cursor-pointer select-none active:bg-zinc-850"
+                  className="w-10 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors border-l border-zinc-800/80 cursor-pointer active:bg-zinc-700"
                 >
-                  +
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -413,114 +418,84 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               Programación del Envío
             </h2>
             
-            <div className="flex flex-col items-center justify-center p-4 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full relative">
+            <div className="flex flex-col items-center justify-center p-5 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full relative">
               <style>{`
                 .rdp-root {
                   --rdp-accent-color: #10b981 !important; /* Emerald-500 */
                   --rdp-background-color: #151515 !important;
+                  width: 100%;
                 }
                 
-                /* Centrar el título del mes y hacerlo relativo */
                 .rdp-month_caption {
-                  display: flex !important;
-                  align-items: center !important;
-                  justify-content: center !important;
-                  width: 100% !important;
                   position: relative !important;
-                  margin-bottom: 12px !important;
-                  padding: 0 4px !important;
+                  display: flex !important;
+                  justify-content: center !important;
+                  align-items: center !important;
+                  margin-bottom: 20px !important;
+                  padding: 0 !important;
                   height: 36px !important;
                 }
 
                 .rdp-caption_label {
-                  font-size: 0.875rem !important; /* text-sm */
-                  font-weight: 600 !important;
+                  font-size: 0.95rem !important;
+                  font-weight: 700 !important;
                   color: #f4f4f5 !important;
                   text-transform: capitalize !important;
+                  z-index: 10;
                 }
 
                 .rdp-nav {
-                  position: static !important;
+                  position: absolute !important;
+                  inset: 0 !important;
+                  display: flex !important;
+                  justify-content: space-between !important;
+                  align-items: center !important;
+                  pointer-events: none !important;
+                  z-index: 20;
                 }
 
-                /* Botón previo (izquierda del título) */
-                .rdp-button_previous, button[name="previous-month"] {
-                  position: absolute !important;
-                  left: 8px !important;
-                  top: 50% !important;
-                  transform: translateY(-50%) !important;
+                .rdp-nav button {
+                  pointer-events: auto !important;
                   display: inline-flex !important;
                   align-items: center !important;
                   justify-content: center !important;
-                  width: 32px !important;
-                  height: 32px !important;
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  background: #1c1c1e !important;
-                  border: 1px solid #27272a !important; /* border-zinc-800 */
-                  border-radius: 8px !important;
-                  color: #a1a1aa !important; /* text-zinc-400 */
+                  width: 36px !important;
+                  height: 36px !important;
+                  background: #18181b !important; /* zinc-900 */
+                  border: 1px solid #27272a !important; /* zinc-800 */
+                  border-radius: 10px !important;
+                  color: #a1a1aa !important; /* zinc-400 */
                   cursor: pointer !important;
-                  transition: all 0.2s !important;
-                  opacity: 1 !important;
-                  pointer-events: auto !important;
-                  z-index: 20 !important;
+                  transition: all 0.2s ease !important;
                 }
 
-                /* Botón siguiente (derecha del título) */
-                .rdp-button_next, button[name="next-month"] {
-                  position: absolute !important;
-                  right: 8px !important;
-                  top: 50% !important;
-                  transform: translateY(-50%) !important;
-                  display: inline-flex !important;
-                  align-items: center !important;
-                  justify-content: center !important;
-                  width: 32px !important;
-                  height: 32px !important;
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  background: #1c1c1e !important;
-                  border: 1px solid #27272a !important; /* border-zinc-800 */
-                  border-radius: 8px !important;
-                  color: #a1a1aa !important; /* text-zinc-400 */
-                  cursor: pointer !important;
-                  transition: all 0.2s !important;
-                  opacity: 1 !important;
-                  pointer-events: auto !important;
-                  z-index: 20 !important;
+                .rdp-nav button:hover:not(:disabled) {
+                  background: #27272a !important; /* zinc-800 */
+                  color: #f4f4f5 !important; /* zinc-100 */
+                  border-color: #3f3f46 !important; /* zinc-700 */
                 }
 
-                .rdp-button_previous:hover, .rdp-button_next:hover {
-                  background: #27272a !important;
-                  color: #f4f4f5 !important;
-                  border-color: #3f3f46 !important;
-                }
-
-                .rdp-button_previous:disabled, .rdp-button_next:disabled {
-                  opacity: 0.15 !important;
+                .rdp-nav button:disabled {
+                  opacity: 0.25 !important;
                   cursor: not-allowed !important;
-                  background: transparent !important;
                 }
 
                 .rdp-chevron {
                   fill: none !important;
                   stroke: currentColor !important;
                   stroke-width: 2.5px !important;
-                  width: 14px !important;
-                  height: 14px !important;
-                  color: inherit !important;
-                  display: inline-block !important;
+                  width: 16px !important;
+                  height: 16px !important;
                 }
-
-                /* Ocultar las flechas nativas feas de input de tipo numérico */
+                
+                /* Esconder flechas default del navegador de los number inputs */
                 input[type="number"]::-webkit-outer-spin-button,
                 input[type="number"]::-webkit-inner-spin-button {
-                  -webkit-appearance: none !important;
-                  margin: 0 !important;
+                  -webkit-appearance: none;
+                  margin: 0;
                 }
                 input[type="number"] {
-                  -moz-appearance: textfield !important;
+                  -moz-appearance: textfield;
                 }
               `}</style>
               <DayPicker
