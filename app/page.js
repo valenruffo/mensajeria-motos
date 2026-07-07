@@ -377,17 +377,33 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               <div className="text-xs text-zinc-400 flex-1 leading-snug">
                 ¿Tenés el kilometraje exacto? Ajustalo manualmente:
               </div>
-              <input
-                type="number"
-                min="1"
-                max="200"
-                value={distanciaKm || ""}
-                onChange={(e) => {
-                  const val = Math.max(1, Number(e.target.value));
-                  setDistanciaKm(val);
-                }}
-                className="w-20 text-center bg-zinc-950 border border-zinc-800 focus:border-emerald-500/80 rounded-lg py-1.5 text-sm font-semibold text-zinc-100 focus:outline-none"
-              />
+              <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden h-8">
+                <button
+                  type="button"
+                  onClick={() => setDistanciaKm((prev) => Math.max(1, prev - 1))}
+                  className="w-8 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors border-r border-zinc-800/80 font-bold cursor-pointer select-none active:bg-zinc-850"
+                >
+                  —
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  value={distanciaKm || ""}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value));
+                    setDistanciaKm(val);
+                  }}
+                  className="w-12 text-center bg-transparent border-0 text-sm font-semibold text-zinc-100 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setDistanciaKm((prev) => Math.min(200, prev + 1))}
+                  className="w-8 h-full flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors border-l border-zinc-800/80 font-bold cursor-pointer select-none active:bg-zinc-850"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
 
@@ -403,6 +419,25 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   --rdp-accent-color: #10b981 !important; /* Emerald-500 */
                   --rdp-background-color: #151515 !important;
                 }
+                
+                /* Corregir superposición de cabecera en react-day-picker v10 */
+                .rdp-month_caption {
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: space-between !important;
+                  width: 100% !important;
+                  position: relative !important;
+                  margin-bottom: 12px !important;
+                  padding: 0 4px !important;
+                }
+
+                .rdp-nav {
+                  position: static !important;
+                  display: flex !important;
+                  gap: 6px !important;
+                  z-index: 10 !important;
+                }
+
                 /* Corregir los botones de navegación */
                 .rdp-button_previous, .rdp-button_next, .rdp-nav_button, 
                 button[name="previous-month"], button[name="next-month"] {
@@ -446,13 +481,14 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   display: inline-block !important;
                 }
 
-                .rdp-nav {
-                  position: absolute !important;
-                  right: 16px !important;
-                  top: 16px !important;
-                  display: flex !important;
-                  gap: 8px !important;
-                  z-index: 10 !important;
+                /* Ocultar las flechas nativas feas de input de tipo numérico */
+                input[type="number"]::-webkit-outer-spin-button,
+                input[type="number"]::-webkit-inner-spin-button {
+                  -webkit-appearance: none !important;
+                  margin: 0 !important;
+                }
+                input[type="number"] {
+                  -moz-appearance: textfield !important;
                 }
               `}</style>
               <DayPicker
