@@ -50,6 +50,10 @@ export default function CotizadorMotoenvios() {
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
   const [tramiteEspera, setTramiteEspera] = useState("ninguno"); // "ninguno" | "corto" | "largo"
 
+  // PAGO Y LOGÍSTICA
+  const [lugarPago, setLugarPago] = useState("retiro"); // "retiro" | "entrega"
+  const [medioPago, setMedioPago] = useState("efectivo"); // "efectivo" | "transferencia"
+
   // ERRORES DE VALIDACIÓN
   const [errors, setErrors] = useState({
     origen: false,
@@ -128,15 +132,22 @@ export default function CotizadorMotoenvios() {
     const txtLluvia = "Sujeto a clima (+50% si llueve)";
     const totalFormateado = calculoTarifa.totalFinal.toLocaleString("es-AR");
 
+    const txtLugarPago = lugarPago === "retiro" ? "PAGA EN RETIRO (ORIGEN)" : "PAGA EN ENTREGA (DESTINO)";
+    const txtMedioPago = medioPago === "efectivo" ? "EFECTIVO" : "MERCADO PAGO / TRANSFERENCIA";
+
     const mensaje = `🏍️ *NUEVO PEDIDO DE ENVÍO*
 
 📍 *HOJA DE RUTA:*
 • 🟢 *Origen/Retiro:* ${origen.trim()}
 • 🔴 *Destino/Entrega:* ${destino.trim()}
 
+💵 *PAGO Y LOGÍSTICA:*
+• 💰 *Lugar de Pago:* ${txtLugarPago}
+• 💳 *Medio:* ${txtMedioPago}
+
 📦 *DETALLE DEL PAQUETE:*
 • *Tipo:* ${bultoLabel}
-• *Notas adicionales:* ${notas.trim() || "Ninguna"}
+• *Notas/Contacto:* ${notas.trim() || "Ninguna"}
 
 ⚡ *ADICIONALES APLICADOS:*
 • 🔄 *Ida y Vuelta:* ${txtIdaVuelta}
@@ -464,14 +475,96 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
             </div>
           </div>
 
+          {/* PAGO Y LOGÍSTICA */}
+          <div className="flex flex-col gap-4 border-t border-zinc-800/40 pt-4">
+            <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
+              Pago y Logística
+            </h2>
+            
+            <div className="flex flex-col gap-4">
+              {/* LUGAR DE PAGO */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs text-zinc-400 font-medium flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-zinc-500">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                  ¿Dónde se realiza el pago?
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    key="pago-retiro"
+                    type="button"
+                    onClick={() => setLugarPago("retiro")}
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                      lugarPago === "retiro"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    Paga en Retiro (Origen)
+                  </button>
+                  <button
+                    key="pago-entrega"
+                    type="button"
+                    onClick={() => setLugarPago("entrega")}
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                      lugarPago === "entrega"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    Paga en Entrega (Destino)
+                  </button>
+                </div>
+              </div>
+
+              {/* MEDIO DE PAGO */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs text-zinc-400 font-medium flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-zinc-500">
+                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                    <line x1="2" x2="22" y1="10" y2="10" />
+                  </svg>
+                  Medio de pago
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    key="medio-efectivo"
+                    type="button"
+                    onClick={() => setMedioPago("efectivo")}
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                      medioPago === "efectivo"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    Efectivo
+                  </button>
+                  <button
+                    key="medio-transferencia"
+                    type="button"
+                    onClick={() => setMedioPago("transferencia")}
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                      medioPago === "transferencia"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                        : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
+                    }`}
+                  >
+                    Mercado Pago / Transf.
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* NOTAS ADICIONALES */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 border-t border-zinc-800/40 pt-4">
             <label htmlFor="notas-textarea" className="text-xs text-zinc-400 font-medium">
-              Notas adicionales / Qué llevas
+              Notas / Contacto de quien recibe
             </label>
             <textarea
               id="notas-textarea"
-              placeholder="Ej: Golpear puerta roja, llevar caja con cuidado, entregar a nombre de Juan..."
+              placeholder="Ej: Entregar a Juan (Cel: 11-3456-7890), timbre 3B, portón negro..."
               rows="3"
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
