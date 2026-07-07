@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 // CONFIGURACIÓN CONSTANTE (Fuente de verdad)
+const configAdmin = {
+  anularDiaActual: false, // Cambiar a true para obligar a programar desde mañana
+};
+
 const WHATSAPP_NUMBER = "5491112345678"; // Reemplazar por el número de WhatsApp de destino (código de país + número, ej: 549...)
 const PRECIO_BASE_GENERAL = 4000;
 const PRECIO_KM_EXTRA = 400;
@@ -39,6 +47,7 @@ const CATEGORIAS_BULTO = [
 
 export default function CotizadorMotoenvios() {
   // ESTADOS DEL FORMULARIO
+  const [nombreCompleto, setNombreCompleto] = useState("");
   const [origen, setOrigen] = useState("");
   const [destino, setDestino] = useState("");
   const [notas, setNotas] = useState("");
@@ -46,6 +55,22 @@ export default function CotizadorMotoenvios() {
   const [distanciaKm, setDistanciaKm] = useState(5);
   const [bultoId, setBultoId] = useState("sobre");
   
+  // FECHA Y HORA DE PROGRAMACIÓN
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const defaultDate = useMemo(() => {
+    if (configAdmin.anularDiaActual) {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      return tomorrow;
+    }
+    return today;
+  }, []);
+
+  const [fechaEnvio, setFechaEnvio] = useState(defaultDate);
+  const [horaInicio, setHoraInicio] = useState("Lo antes posible (Ya mismo)");
+
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
   const [tramiteEspera, setTramiteEspera] = useState("ninguno"); // "ninguno" | "corto" | "largo"
@@ -56,9 +81,19 @@ export default function CotizadorMotoenvios() {
 
   // ERRORES DE VALIDACIÓN
   const [errors, setErrors] = useState({
+    nombre: false,
     origen: false,
     destino: false,
   });
+
+  // CONFIGURACIÓN DE FECHAS DESHABILITADAS
+  const disabledDays = useMemo(() => {
+    const matchers = [{ before: startOfToday }];
+    if (configAdmin.anularDiaActual) {
+      matchers.push(startOfToday);
+    }
+    return matchers;
+  }, []);
 
   // ENCONTRAR CONFIGURACIÓN SELECCIONADA
   const zonaSeleccionada = useMemo(() => {
@@ -107,17 +142,23 @@ export default function CotizadorMotoenvios() {
     e.preventDefault();
 
     // Validaciones a prueba de errores
+    const hasNombreError = !nombreCompleto.trim();
     const hasOrigenError = !origen.trim();
     const hasDestinoError = !destino.trim();
 
     setErrors({
+      nombre: hasNombreError,
       origen: hasOrigenError,
       destino: hasDestinoError,
     });
 
-    if (hasOrigenError || hasDestinoError) {
+    if (hasNombreError || hasOrigenError || hasDestinoError) {
       // Hacer scroll al primer error de manera suave en móvil
-      const firstError = document.getElementById(hasOrigenError ? "origen-input" : "destino-input");
+      let firstErrorId = "nombre-input";
+      if (!hasNombreError) {
+        firstErrorId = hasOrigenError ? "origen-input" : "destino-input";
+      }
+      const firstError = document.getElementById(firstErrorId);
       if (firstError) {
         firstError.focus();
         firstError.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -135,9 +176,14 @@ export default function CotizadorMotoenvios() {
     const txtLugarPago = lugarPago === "retiro" ? "PAGA EN RETIRO (ORIGEN)" : "PAGA EN ENTREGA (DESTINO)";
     const txtMedioPago = medioPago === "efectivo" ? "EFECTIVO" : "MERCADO PAGO / TRANSFERENCIA";
 
+    const fechaFormateada = fechaEnvio ? format(fechaEnvio, "EEEE, d 'de' MMMM", { locale: es }) : "No especificada";
+
     const mensaje = `🏍️ *NUEVO PEDIDO DE ENVÍO*
+👤 *Cliente:* ${nombreCompleto.trim()}
 
 📍 *HOJA DE RUTA:*
+• 📅 *Fecha del envío:* ${fechaFormateada}
+• 🕒 *Retirar desde:* ${horaInicio}
 • 🟢 *Origen/Retiro:* ${origen.trim()}
 • 🔴 *Destino/Entrega:* ${destino.trim()}
 
@@ -189,8 +235,36 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
         {/* FORMULARIO PRINCIPAL */}
         <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800/80 rounded-[2rem] p-6 md:p-8 flex flex-col gap-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]">
           
-          {/* HOJA DE RUTA */}
+          {/* DATOS DEL CLIENTE */}
           <div className="flex flex-col gap-4">
+            <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
+              Datos del Cliente
+            </h2>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="nombre-input" className="text-xs text-zinc-400 font-medium">
+                Nombre Completo *
+              </label>
+              <input
+                id="nombre-input"
+                type="text"
+                placeholder="Tu nombre y apellido..."
+                value={nombreCompleto}
+                onChange={(e) => {
+                  setNombreCompleto(e.target.value);
+                  if (e.target.value.trim()) setErrors((prev) => ({ ...prev, nombre: false }));
+                }}
+                className={`w-full bg-zinc-950/60 border ${
+                  errors.nombre ? "border-red-500 focus:border-red-500" : "border-zinc-800 focus:border-emerald-500/80"
+                } rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors duration-200`}
+              />
+              {errors.nombre && (
+                <span className="text-xs text-red-400 mt-0.5">El nombre es obligatorio.</span>
+              )}
+            </div>
+          </div>
+
+          {/* HOJA DE RUTA */}
+          <div className="flex flex-col gap-4 border-t border-zinc-800/40 pt-4">
             <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
               Hoja de Ruta
             </h2>
@@ -307,6 +381,85 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                 }}
                 className="w-20 text-center bg-zinc-950 border border-zinc-800 focus:border-emerald-500/80 rounded-lg py-1.5 text-sm font-semibold text-zinc-100 focus:outline-none"
               />
+            </div>
+          </div>
+
+          {/* PROGRAMACIÓN */}
+          <div className="flex flex-col gap-4 border-t border-zinc-800/40 pt-4">
+            <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
+              Programación del Envío
+            </h2>
+            
+            <div className="flex flex-col items-center justify-center p-4 bg-[#151515] border border-zinc-800/80 rounded-2xl w-full">
+              <DayPicker
+                mode="single"
+                selected={fechaEnvio}
+                onSelect={(date) => date && setFechaEnvio(date)}
+                disabled={disabledDays}
+                locale={es}
+                classNames={{
+                  months: "flex flex-col sm:flex-row gap-4 justify-center w-full",
+                  month: "space-y-4 w-full",
+                  month_caption: "flex justify-center pt-1 relative items-center mb-2",
+                  caption_label: "text-sm font-semibold text-zinc-100 capitalize",
+                  nav: "space-x-1 flex items-center absolute right-0 top-0",
+                  button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-zinc-400 hover:text-zinc-100 flex items-center justify-center rounded-lg border border-zinc-800 transition-colors cursor-pointer",
+                  button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-zinc-400 hover:text-zinc-100 flex items-center justify-center rounded-lg border border-zinc-800 transition-colors cursor-pointer",
+                  weekdays: "flex justify-between w-full border-b border-zinc-800/50 pb-2",
+                  weekday: "text-zinc-500 rounded-md w-9 font-semibold text-[10px] text-center uppercase tracking-wider",
+                  week: "flex w-full mt-1.5 gap-1 justify-between",
+                  day: "h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center rounded-lg text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-all font-medium cursor-pointer",
+                  today: "underline decoration-2 underline-offset-4 text-emerald-400 font-bold",
+                  selected: "bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 hover:text-zinc-950 rounded-lg",
+                  disabled: "text-zinc-700 opacity-20 cursor-not-allowed hover:bg-transparent hover:text-zinc-700",
+                  outside: "text-zinc-600 opacity-40",
+                }}
+              />
+              
+              {fechaEnvio && (
+                <div className="text-xs text-zinc-400 mt-4 text-center font-medium border-t border-zinc-800/50 pt-3 w-full flex items-center justify-center gap-1.5">
+                  <span>📅</span>
+                  <span>Programado para el:</span>
+                  <span className="text-emerald-400 capitalize font-semibold">
+                    {format(fechaEnvio, "EEEE, d 'de' MMMM", { locale: es })}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* HORA DE INICIO */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="hora-select" className="text-xs text-zinc-400 font-medium">
+                🕒 Disponible para retiro a partir de las:
+              </label>
+              <div className="relative">
+                <select
+                  id="hora-select"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="w-full bg-[#151515] border border-zinc-800 focus:border-emerald-500/80 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none transition-colors duration-200 cursor-pointer appearance-none"
+                >
+                  <option value="Lo antes posible (Ya mismo)">Lo antes posible (Ya mismo)</option>
+                  <option value="08:00 hs">08:00 hs</option>
+                  <option value="09:00 hs">09:00 hs</option>
+                  <option value="10:00 hs">10:00 hs</option>
+                  <option value="11:00 hs">11:00 hs</option>
+                  <option value="12:00 hs">12:00 hs</option>
+                  <option value="13:00 hs">13:00 hs</option>
+                  <option value="14:00 hs">14:00 hs</option>
+                  <option value="15:00 hs">15:00 hs</option>
+                  <option value="16:00 hs">16:00 hs</option>
+                  <option value="17:00 hs">17:00 hs</option>
+                  <option value="18:00 hs">18:00 hs</option>
+                  <option value="19:00 hs">19:00 hs</option>
+                  <option value="20:00 hs">20:00 hs</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
 
