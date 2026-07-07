@@ -420,28 +420,35 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   --rdp-background-color: #151515 !important;
                 }
                 
-                /* Corregir superposición de cabecera en react-day-picker v10 */
+                /* Centrar el título del mes y hacerlo relativo */
                 .rdp-month_caption {
                   display: flex !important;
                   align-items: center !important;
-                  justify-content: space-between !important;
+                  justify-content: center !important;
                   width: 100% !important;
                   position: relative !important;
                   margin-bottom: 12px !important;
                   padding: 0 4px !important;
+                  height: 36px !important;
+                }
+
+                .rdp-caption_label {
+                  font-size: 0.875rem !important; /* text-sm */
+                  font-weight: 600 !important;
+                  color: #f4f4f5 !important;
+                  text-transform: capitalize !important;
                 }
 
                 .rdp-nav {
                   position: static !important;
-                  display: flex !important;
-                  gap: 6px !important;
-                  z-index: 10 !important;
                 }
 
-                /* Corregir los botones de navegación */
-                .rdp-button_previous, .rdp-button_next, .rdp-nav_button, 
-                button[name="previous-month"], button[name="next-month"] {
-                  position: relative !important;
+                /* Botón previo (izquierda del título) */
+                .rdp-button_previous, button[name="previous-month"] {
+                  position: absolute !important;
+                  left: 8px !important;
+                  top: 50% !important;
+                  transform: translateY(-50%) !important;
                   display: inline-flex !important;
                   align-items: center !important;
                   justify-content: center !important;
@@ -457,6 +464,31 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   transition: all 0.2s !important;
                   opacity: 1 !important;
                   pointer-events: auto !important;
+                  z-index: 20 !important;
+                }
+
+                /* Botón siguiente (derecha del título) */
+                .rdp-button_next, button[name="next-month"] {
+                  position: absolute !important;
+                  right: 8px !important;
+                  top: 50% !important;
+                  transform: translateY(-50%) !important;
+                  display: inline-flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  background: #1c1c1e !important;
+                  border: 1px solid #27272a !important; /* border-zinc-800 */
+                  border-radius: 8px !important;
+                  color: #a1a1aa !important; /* text-zinc-400 */
+                  cursor: pointer !important;
+                  transition: all 0.2s !important;
+                  opacity: 1 !important;
+                  pointer-events: auto !important;
+                  z-index: 20 !important;
                 }
 
                 .rdp-button_previous:hover, .rdp-button_next:hover {
