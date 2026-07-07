@@ -22,7 +22,7 @@ const configAdmin = {
   anularDiaActual: false, // Cambiar a true para obligar a programar desde mañana
 };
 
-const WHATSAPP_NUMBER = "5491112345678"; // Reemplazar por el número de WhatsApp de destino (código de país + número, ej: 549...)
+const WHATSAPP_NUMBER = "5491135167226"; // Reemplazar por el número de WhatsApp de destino (código de país + número, ej: 549...)
 const PRECIO_BASE_GENERAL = 4000;
 const PRECIO_KM_EXTRA = 400;
 
