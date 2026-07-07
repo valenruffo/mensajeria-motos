@@ -108,7 +108,7 @@ function MiniCalendar({ selected, onSelect }) {
           type="button"
           onClick={prevMonth}
           disabled={!canPrev}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
@@ -149,9 +149,9 @@ function MiniCalendar({ selected, onSelect }) {
               onClick={() => onSelect(date)}
               className={[
                 "relative h-9 w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150",
-                isPast     ? "text-zinc-700 cursor-not-allowed" : "",
+                isPast     ? "text-zinc-700 cursor-not-allowed" : "cursor-pointer",
                 isSelected ? "bg-emerald-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(16,185,129,.35)]" : "",
-                !isSelected && !isPast ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer" : "",
+                !isSelected && !isPast ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" : "",
               ].join(" ")}
             >
               {date.getDate()}
@@ -595,7 +595,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     key={b.id}
                     type="button"
                     onClick={() => setBultoId(b.id)}
-                    className={`flex items-center text-left p-4 rounded-xl border transition-all duration-200 active:scale-[0.98] ${
+                    className={`flex items-center text-left p-4 rounded-xl border cursor-pointer transition-all duration-200 active:scale-[0.98] ${
                       isActive
                         ? "bg-zinc-800/60 border-emerald-500/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] text-zinc-100"
                         : "bg-zinc-950/40 border-zinc-800/60 text-zinc-400 hover:border-zinc-800 hover:text-zinc-300"
@@ -650,7 +650,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
               <button
                 type="button"
                 onClick={() => setEsIdaYVuelta(!esIdaYVuelta)}
-                className={`flex items-center justify-between p-4 rounded-xl border text-left active:scale-[0.98] transition-all duration-200 ${
+                className={`flex items-center justify-between p-4 rounded-xl border text-left cursor-pointer active:scale-[0.98] transition-all duration-200 ${
                   esIdaYVuelta
                     ? "bg-zinc-800/40 border-emerald-500/40 text-zinc-100"
                     : "bg-zinc-950/20 border-zinc-800/60 text-zinc-400"
@@ -693,7 +693,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   <button
                     type="button"
                     onClick={() => setTramiteEspera("ninguno")}
-                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
                       tramiteEspera === "ninguno"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -705,7 +705,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   <button
                     type="button"
                     onClick={() => setTramiteEspera("corto")}
-                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
                       tramiteEspera === "corto"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -717,7 +717,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                   <button
                     type="button"
                     onClick={() => setTramiteEspera("largo")}
-                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
+                    className={`py-3 px-2 text-center rounded-xl border text-[11px] font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
                       tramiteEspera === "largo"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -767,7 +767,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     key="pago-retiro"
                     type="button"
                     onClick={() => setLugarPago("retiro")}
-                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 ${
                       lugarPago === "retiro"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -779,7 +779,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     key="pago-entrega"
                     type="button"
                     onClick={() => setLugarPago("entrega")}
-                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 ${
                       lugarPago === "entrega"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -804,7 +804,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     key="medio-efectivo"
                     type="button"
                     onClick={() => setMedioPago("efectivo")}
-                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 ${
                       medioPago === "efectivo"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
@@ -816,7 +816,7 @@ _Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios
                     key="medio-transferencia"
                     type="button"
                     onClick={() => setMedioPago("transferencia")}
-                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold active:scale-[0.98] transition-all duration-200 ${
+                    className={`py-3 px-3 text-center rounded-xl border text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all duration-200 ${
                       medioPago === "transferencia"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                         : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700"
