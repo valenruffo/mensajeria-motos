@@ -72,19 +72,18 @@ export default function CotizadorMotoenvios() {
   }, [todayDate]);
   const [diaEnvio, setDiaEnvio] = useState("hoy"); // "hoy" | "manana"
 
-  // FRANJAS HORARIAS
-  const FRANJAS = [
-    "09:00 a 12:00 hs",
-    "12:00 a 15:00 hs",
-    "15:00 a 18:00 hs",
-    "18:00 a 20:00 hs",
-  ];
-  const [franjaRetiro, setFranjaRetiro] = useState(FRANJAS[0]);
-  const [franjaEntrega, setFranjaEntrega] = useState(FRANJAS[0]);
+  // FRANJAS HORARIAS (horas numéricas, rango 6-22)
+  const [retiroDesde, setRetiroDesde] = useState(9);
+  const [retiroHasta, setRetiroHasta] = useState(12);
+  const [entregaDesde, setEntregaDesde] = useState(9);
+  const [entregaHasta, setEntregaHasta] = useState(12);
   const [mismaFranja, setMismaFranja] = useState(false);
 
-  // Cuando mismaFranja está activo, sincronizar entrega con retiro
-  const franjaEntregaEfectiva = mismaFranja ? franjaRetiro : franjaEntrega;
+  const entregaDesdeEfectivo = mismaFranja ? retiroDesde : entregaDesde;
+  const entregaHastaEfectivo = mismaFranja ? retiroHasta : entregaHasta;
+
+  function fmtHora(h) { return `${String(h).padStart(2,"0")}:00`; }
+  function txtFranja(desde, hasta) { return `${fmtHora(desde)} a ${fmtHora(hasta)} hs`; }
 
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
@@ -178,7 +177,8 @@ export default function CotizadorMotoenvios() {
     const txtLugarPago = lugarPago === "retiro" ? "PAGA EN RETIRO (ORIGEN)" : "PAGA EN ENTREGA (DESTINO)";
     const txtMedioPago = medioPago === "efectivo" ? "EFECTIVO" : "MERCADO PAGO / TRANSFERENCIA";
     const txtDia = diaEnvio === "hoy" ? `Hoy (${getNombreFecha(todayDate)})` : `Manana (${getNombreFecha(tomorrowDate)})`;
-    const txtFranjaEntrega = mismaFranja ? "Misma franja que retiro" : franjaEntregaEfectiva;
+    const txtFranjaRetiro = txtFranja(retiroDesde, retiroHasta);
+    const txtFranjaEntrega = mismaFranja ? "Misma franja que retiro" : txtFranja(entregaDesdeEfectivo, entregaHastaEfectivo);
     const txtProducto = productoTipo || "No especificado";
 
     const mensaje = `*-- NUEVO PEDIDO DE ENVIO --*
@@ -188,7 +188,7 @@ export default function CotizadorMotoenvios() {
 - *Origen/Retiro:* ${origen.trim()}
 - *Destino/Entrega:* ${destino.trim()}
 - *Producto:* ${txtProducto}
-- *Retiro:* ${txtDia} de ${franjaRetiro}
+- *Retiro:* ${txtDia} de ${txtFranjaRetiro}
 - *Entrega:* ${txtDia} de ${txtFranjaEntrega}
 
 *PAGO Y LOGISTICA:*
@@ -439,46 +439,61 @@ _Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta.
 
             {/* FRANJA HORARIA RETIRO */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="franja-retiro" className="text-xs text-zinc-400 font-medium">
-                Franja horaria de Retiro (Origen)
-              </label>
-              <div className="relative">
-                <select
-                  id="franja-retiro"
-                  value={franjaRetiro}
-                  onChange={(e) => setFranjaRetiro(e.target.value)}
-                  className="w-full bg-[#151515] border border-zinc-800 focus:border-emerald-500/80 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none transition-colors duration-200 cursor-pointer appearance-none"
-                >
-                  {FRANJAS.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              <label className="text-xs text-zinc-400 font-medium">Franja horaria de Retiro (Origen)</label>
+              <div className="flex items-center gap-2 bg-[#151515] border border-zinc-800 rounded-xl px-3 py-2.5">
+                {/* DESDE */}
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <button type="button" onClick={() => setRetiroDesde(h => Math.max(6, h - 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span className="font-mono text-sm font-bold text-zinc-100 w-14 text-center">{fmtHora(retiroDesde)}</span>
+                  <button type="button" onClick={() => setRetiroDesde(h => Math.min(retiroHasta - 1, h + 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
                 </div>
+                <span className="text-zinc-600 text-xs font-medium">a</span>
+                {/* HASTA */}
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <button type="button" onClick={() => setRetiroHasta(h => Math.max(retiroDesde + 1, h - 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span className="font-mono text-sm font-bold text-zinc-100 w-14 text-center">{fmtHora(retiroHasta)}</span>
+                  <button type="button" onClick={() => setRetiroHasta(h => Math.min(22, h + 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+                <span className="text-zinc-600 text-[10px] font-medium shrink-0">hs</span>
               </div>
             </div>
 
             {/* FRANJA HORARIA ENTREGA */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="franja-entrega" className={`text-xs font-medium ${mismaFranja ? "text-zinc-600" : "text-zinc-400"}`}>
-                Franja horaria de Entrega (Destino)
-              </label>
-              <div className="relative">
-                <select
-                  id="franja-entrega"
-                  value={franjaEntregaEfectiva}
-                  onChange={(e) => setFranjaEntrega(e.target.value)}
-                  disabled={mismaFranja}
-                  className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors duration-200 appearance-none ${
-                    mismaFranja
-                      ? "bg-zinc-900/40 border-zinc-800/40 text-zinc-600 cursor-not-allowed"
-                      : "bg-[#151515] border-zinc-800 focus:border-emerald-500/80 text-zinc-100 cursor-pointer"
-                  }`}
-                >
-                  {FRANJAS.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              <label className={`text-xs font-medium ${mismaFranja ? "text-zinc-600" : "text-zinc-400"}`}>Franja horaria de Entrega (Destino)</label>
+              <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 transition-colors ${
+                mismaFranja ? "bg-zinc-900/30 border-zinc-800/40" : "bg-[#151515] border-zinc-800"
+              }`}>
+                {/* DESDE */}
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <button type="button" disabled={mismaFranja} onClick={() => setEntregaDesde(h => Math.max(6, h - 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span className={`font-mono text-sm font-bold w-14 text-center ${mismaFranja ? "text-zinc-600" : "text-zinc-100"}`}>{fmtHora(entregaDesdeEfectivo)}</span>
+                  <button type="button" disabled={mismaFranja} onClick={() => setEntregaDesde(h => Math.min(entregaHasta - 1, h + 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
                 </div>
+                <span className="text-zinc-600 text-xs font-medium">a</span>
+                {/* HASTA */}
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <button type="button" disabled={mismaFranja} onClick={() => setEntregaHasta(h => Math.max(entregaDesde + 1, h - 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span className={`font-mono text-sm font-bold w-14 text-center ${mismaFranja ? "text-zinc-600" : "text-zinc-100"}`}>{fmtHora(entregaHastaEfectivo)}</span>
+                  <button type="button" disabled={mismaFranja} onClick={() => setEntregaHasta(h => Math.min(22, h + 1))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer transition-colors active:scale-90">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+                <span className="text-zinc-600 text-[10px] font-medium shrink-0">hs</span>
               </div>
             </div>
 
@@ -847,7 +862,7 @@ _Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta.
           {/* DISCLAIMER */}
           <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3">
             <p className="text-xs text-amber-400/90 leading-relaxed">
-              <span className="font-bold">Aviso:</span> El precio mostrado es estimado y referencial. El valor final se coordinara con el chofer al confirmar el viaje, ya que puede variar por kilometros reales, demoras en puerta o modificaciones en la ruta.
+              <span className="font-bold">Aviso:</span> El precio mostrado es estimado y referencial. El valor final se coordinara con el conductor al confirmar el viaje.
             </p>
           </div>
 
