@@ -2,19 +2,14 @@
 
 import React, { useState, useMemo } from "react";
 
-// Helpers de fecha (sin date-fns para no depender de la librería)
-const DIAS_SEMANA = ["LU", "MA", "MI", "JU", "VI", "SÁ", "DO"];
-const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+// Helpers de fecha
 const DIAS_SEMANA_LARGO = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-function formatFecha(date) {
+function getNombreFecha(date) {
   if (!date) return "";
   const dia = DIAS_SEMANA_LARGO[date.getDay()];
   return `${dia.charAt(0).toUpperCase() + dia.slice(1)}, ${date.getDate()} de ${MESES[date.getMonth()]}`;
-}
-
-function isSameDay(a, b) {
-  return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 // CONFIGURACIÓN CONSTANTE (Fuente de verdad)
@@ -56,125 +51,6 @@ const CATEGORIAS_BULTO = [
   },
 ];
 
-// ─── COMPONENTE CALENDARIO CUSTOM ───────────────────────────────────────────
-function MiniCalendar({ selected, onSelect }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // viewMonth = primer día del mes que se está mostrando
-  const [viewYear, setViewYear]   = React.useState(selected ? selected.getFullYear() : today.getFullYear());
-  const [viewMonth, setViewMonth] = React.useState(selected ? selected.getMonth()    : today.getMonth());
-
-  // Límites: mes actual y mes siguiente
-  const minYear  = today.getFullYear();
-  const minMonth = today.getMonth();
-  const maxYear  = minMonth === 11 ? minYear + 1 : minYear;
-  const maxMonth = minMonth === 11 ? 0 : minMonth + 1;
-
-  const canPrev = !(viewYear === minYear && viewMonth === minMonth);
-  const canNext = !(viewYear === maxYear && viewMonth === maxMonth);
-
-  function prevMonth() {
-    if (!canPrev) return;
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-    else setViewMonth(m => m - 1);
-  }
-  function nextMonth() {
-    if (!canNext) return;
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-    else setViewMonth(m => m + 1);
-  }
-
-  // Generar celdas del calendario (grid lunes-domingo)
-  const cells = React.useMemo(() => {
-    const firstDay = new Date(viewYear, viewMonth, 1);
-    // día de la semana del primer día (0=Dom → ajustar a lun-dom)
-    const startDow = (firstDay.getDay() + 6) % 7; // 0=Lun
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const grid = [];
-    // celdas vacías antes del día 1
-    for (let i = 0; i < startDow; i++) grid.push(null);
-    for (let d = 1; d <= daysInMonth; d++) grid.push(new Date(viewYear, viewMonth, d));
-    // rellenar hasta completar múltiplo de 7
-    while (grid.length % 7 !== 0) grid.push(null);
-    return grid;
-  }, [viewYear, viewMonth]);
-
-  return (
-    <div className="bg-[#141414] border border-zinc-800/80 rounded-2xl p-4 w-full select-none">
-      {/* Cabecera: mes y flechas */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          type="button"
-          onClick={prevMonth}
-          disabled={!canPrev}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-
-        <span className="text-sm font-bold text-zinc-100 capitalize tracking-wide">
-          {MESES[viewMonth]} {viewYear}
-        </span>
-
-        <button
-          type="button"
-          onClick={nextMonth}
-          disabled={!canNext}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed hover:enabled:bg-zinc-800 hover:enabled:text-zinc-100 transition-all"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
-
-      {/* Días de semana */}
-      <div className="grid grid-cols-7 mb-1">
-        {DIAS_SEMANA.map(d => (
-          <div key={d} className="text-center text-[10px] font-bold text-zinc-600 uppercase tracking-wider py-1">{d}</div>
-        ))}
-      </div>
-
-      {/* Celdas de días */}
-      <div className="grid grid-cols-7 gap-y-0.5">
-        {cells.map((date, i) => {
-          if (!date) return <div key={`e-${i}`} />;
-          const isToday    = isSameDay(date, today);
-          const isSelected = isSameDay(date, selected);
-          const isPast     = date < today;
-          return (
-            <button
-              key={date.toISOString()}
-              type="button"
-              disabled={isPast}
-              onClick={() => onSelect(date)}
-              className={[
-                "relative h-9 w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150",
-                isPast     ? "text-zinc-700 cursor-not-allowed" : "cursor-pointer",
-                isSelected ? "bg-emerald-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(16,185,129,.35)]" : "",
-                !isSelected && !isPast ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" : "",
-              ].join(" ")}
-            >
-              {date.getDate()}
-              {isToday && !isSelected && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Fecha seleccionada */}
-      {selected && (
-        <div className="mt-3 pt-3 border-t border-zinc-800/60 flex items-center justify-center gap-1.5">
-          <span className="text-sm">📅</span>
-          <span className="text-xs text-zinc-400">Programado para el:</span>
-          <span className="text-xs font-semibold text-emerald-400">{formatFecha(selected)}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function CotizadorMotoenvios() {
   // ESTADOS DEL FORMULARIO
@@ -185,22 +61,30 @@ export default function CotizadorMotoenvios() {
   const [zonaFrecuente, setZonaFrecuente] = useState("general");
   const [distanciaKm, setDistanciaKm] = useState(5);
   const [bultoId, setBultoId] = useState("sobre");
-  
-  // FECHA Y HORA DE PROGRAMACIÓN
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const [productoTipo, setProductoTipo] = useState(""); // tipo de producto
 
-  const defaultDate = useMemo(() => {
-    if (configAdmin.anularDiaActual) {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      return tomorrow;
-    }
-    return today;
+  // FECHA: Hoy o Mañana
+  const todayDate = useMemo(() => {
+    const d = new Date(); d.setHours(0,0,0,0); return d;
   }, []);
+  const tomorrowDate = useMemo(() => {
+    const d = new Date(todayDate); d.setDate(d.getDate() + 1); return d;
+  }, [todayDate]);
+  const [diaEnvio, setDiaEnvio] = useState("hoy"); // "hoy" | "manana"
 
-  const [fechaEnvio, setFechaEnvio] = useState(defaultDate);
-  const [horaInicio, setHoraInicio] = useState("Lo antes posible (Ya mismo)");
+  // FRANJAS HORARIAS
+  const FRANJAS = [
+    "09:00 a 12:00 hs",
+    "12:00 a 15:00 hs",
+    "15:00 a 18:00 hs",
+    "18:00 a 20:00 hs",
+  ];
+  const [franjaRetiro, setFranjaRetiro] = useState(FRANJAS[0]);
+  const [franjaEntrega, setFranjaEntrega] = useState(FRANJAS[0]);
+  const [mismaFranja, setMismaFranja] = useState(false);
+
+  // Cuando mismaFranja está activo, sincronizar entrega con retiro
+  const franjaEntregaEfectiva = mismaFranja ? franjaRetiro : franjaEntrega;
 
   // ADICIONALES
   const [esIdaYVuelta, setEsIdaYVuelta] = useState(false);
@@ -210,21 +94,9 @@ export default function CotizadorMotoenvios() {
   const [lugarPago, setLugarPago] = useState("retiro"); // "retiro" | "entrega"
   const [medioPago, setMedioPago] = useState("efectivo"); // "efectivo" | "transferencia"
 
-  // ERRORES DE VALIDACIÓN
-  const [errors, setErrors] = useState({
-    nombre: false,
-    origen: false,
-    destino: false,
-  });
 
-  // CONFIGURACIÓN DE FECHAS DESHABILITADAS
-  const disabledDays = useMemo(() => {
-    const matchers = [{ before: startOfToday }];
-    if (configAdmin.anularDiaActual) {
-      matchers.push(startOfToday);
-    }
-    return matchers;
-  }, []);
+  // ERRORES DE VALIDACIÓN
+  const [errors, setErrors] = useState({ nombre: false, origen: false, destino: false });
 
   // ENCONTRAR CONFIGURACIÓN SELECCIONADA
   const zonaSeleccionada = useMemo(() => {
@@ -297,26 +169,27 @@ export default function CotizadorMotoenvios() {
       return;
     }
 
-    // Construcción del template de WhatsApp según especificación
+    // Construcción del template de WhatsApp
     const bultoLabel = bultoSeleccionado.label.toUpperCase();
-    const txtIdaVuelta = esIdaYVuelta ? "SÍ (+50%)" : "NO";
-    const txtTramite = tramiteEspera === "corto" ? "SÍ ($1500 - HASTA 15 MIN)" : tramiteEspera === "largo" ? "SÍ ($3000 - HASTA 30 MIN)" : "NO";
+    const txtIdaVuelta = esIdaYVuelta ? "SI (+50%)" : "NO";
+    const txtTramite = tramiteEspera === "corto" ? "SI ($1500 - HASTA 15 MIN)" : tramiteEspera === "largo" ? "SI ($3000 - HASTA 30 MIN)" : "NO";
     const txtLluvia = "Sujeto a clima (+50% si llueve)";
     const totalFormateado = calculoTarifa.totalFinal.toLocaleString("es-AR");
-
     const txtLugarPago = lugarPago === "retiro" ? "PAGA EN RETIRO (ORIGEN)" : "PAGA EN ENTREGA (DESTINO)";
     const txtMedioPago = medioPago === "efectivo" ? "EFECTIVO" : "MERCADO PAGO / TRANSFERENCIA";
-
-    const fechaFormateada = formatFecha(fechaEnvio) || "No especificada";
+    const txtDia = diaEnvio === "hoy" ? `Hoy (${getNombreFecha(todayDate)})` : `Manana (${getNombreFecha(tomorrowDate)})`;
+    const txtFranjaEntrega = mismaFranja ? "Misma franja que retiro" : franjaEntregaEfectiva;
+    const txtProducto = productoTipo || "No especificado";
 
     const mensaje = `*-- NUEVO PEDIDO DE ENVIO --*
 *Cliente:* ${nombreCompleto.trim()}
 
 *HOJA DE RUTA:*
-- *Fecha:* ${fechaFormateada}
-- *Retirar desde:* ${horaInicio}
 - *Origen/Retiro:* ${origen.trim()}
 - *Destino/Entrega:* ${destino.trim()}
+- *Producto:* ${txtProducto}
+- *Retiro:* ${txtDia} de ${franjaRetiro}
+- *Entrega:* ${txtDia} de ${txtFranjaEntrega}
 
 *PAGO Y LOGISTICA:*
 - *Lugar de Pago:* ${txtLugarPago}
@@ -541,45 +414,87 @@ _Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta.
             <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
               Programación del Envío
             </h2>
-            
-            <MiniCalendar selected={fechaEnvio} onSelect={setFechaEnvio} />
 
+            {/* PILLS HOY / MAÑANA */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: "hoy",    label: "Hoy",     sub: getNombreFecha(todayDate) },
+                { id: "manana", label: "Mañana",  sub: getNombreFecha(tomorrowDate) },
+              ].map(({ id, label, sub }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setDiaEnvio(id)}
+                  className={`flex flex-col items-center justify-center py-4 px-3 rounded-xl border cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+                    diaEnvio === id
+                      ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                      : "bg-zinc-950/40 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                  }`}
+                >
+                  <span className="text-base font-bold">{label}</span>
+                  <span className="text-[10px] mt-0.5 opacity-70 capitalize">{sub}</span>
+                </button>
+              ))}
+            </div>
 
-
-            {/* HORA DE INICIO */}
+            {/* FRANJA HORARIA RETIRO */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="hora-select" className="text-xs text-zinc-400 font-medium">
-                🕒 Disponible para retiro a partir de las:
+              <label htmlFor="franja-retiro" className="text-xs text-zinc-400 font-medium">
+                Franja horaria de Retiro (Origen)
               </label>
               <div className="relative">
                 <select
-                  id="hora-select"
-                  value={horaInicio}
-                  onChange={(e) => setHoraInicio(e.target.value)}
+                  id="franja-retiro"
+                  value={franjaRetiro}
+                  onChange={(e) => setFranjaRetiro(e.target.value)}
                   className="w-full bg-[#151515] border border-zinc-800 focus:border-emerald-500/80 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none transition-colors duration-200 cursor-pointer appearance-none"
                 >
-                  <option value="Lo antes posible (Ya mismo)">Lo antes posible (Ya mismo)</option>
-                  <option value="08:00 hs">08:00 hs</option>
-                  <option value="09:00 hs">09:00 hs</option>
-                  <option value="10:00 hs">10:00 hs</option>
-                  <option value="11:00 hs">11:00 hs</option>
-                  <option value="12:00 hs">12:00 hs</option>
-                  <option value="13:00 hs">13:00 hs</option>
-                  <option value="14:00 hs">14:00 hs</option>
-                  <option value="15:00 hs">15:00 hs</option>
-                  <option value="16:00 hs">16:00 hs</option>
-                  <option value="17:00 hs">17:00 hs</option>
-                  <option value="18:00 hs">18:00 hs</option>
-                  <option value="19:00 hs">19:00 hs</option>
-                  <option value="20:00 hs">20:00 hs</option>
+                  {FRANJAS.map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
             </div>
+
+            {/* FRANJA HORARIA ENTREGA */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="franja-entrega" className={`text-xs font-medium ${mismaFranja ? "text-zinc-600" : "text-zinc-400"}`}>
+                Franja horaria de Entrega (Destino)
+              </label>
+              <div className="relative">
+                <select
+                  id="franja-entrega"
+                  value={franjaEntregaEfectiva}
+                  onChange={(e) => setFranjaEntrega(e.target.value)}
+                  disabled={mismaFranja}
+                  className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors duration-200 appearance-none ${
+                    mismaFranja
+                      ? "bg-zinc-900/40 border-zinc-800/40 text-zinc-600 cursor-not-allowed"
+                      : "bg-[#151515] border-zinc-800 focus:border-emerald-500/80 text-zinc-100 cursor-pointer"
+                  }`}
+                >
+                  {FRANJAS.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
+            </div>
+
+            {/* TOGGLE MISMA FRANJA */}
+            <button
+              type="button"
+              onClick={() => setMismaFranja(!mismaFranja)}
+              className="flex items-center gap-3 cursor-pointer group"
+            >
+              <div className={`w-8 h-4 rounded-full transition-colors relative shrink-0 ${mismaFranja ? "bg-emerald-500" : "bg-zinc-800"}`}>
+                <div className={`w-3.5 h-3.5 bg-zinc-950 rounded-full absolute top-[1px] transition-transform ${mismaFranja ? "translate-x-[15px]" : "translate-x-[1px]"}`} />
+              </div>
+              <span className={`text-xs font-medium transition-colors ${mismaFranja ? "text-emerald-400" : "text-zinc-500 group-hover:text-zinc-400"}`}>
+                Usar la misma franja para retiro y entrega
+              </span>
+            </button>
           </div>
 
           {/* DETALLES DE BULTO */}
@@ -587,6 +502,32 @@ _Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta.
             <h2 className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
               Categoría de Bulto
             </h2>
+
+            {/* PRODUCTO - nuevo dropdown */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="producto-select" className="text-xs text-zinc-400 font-medium">
+                Tipo de producto a enviar
+              </label>
+              <div className="relative">
+                <select
+                  id="producto-select"
+                  value={productoTipo}
+                  onChange={(e) => setProductoTipo(e.target.value)}
+                  className="w-full bg-zinc-950/60 border border-zinc-800 focus:border-emerald-500/80 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none transition-colors duration-200 cursor-pointer appearance-none"
+                >
+                  <option value="">Seleccionar tipo de producto...</option>
+                  <option value="Documentacion / Papeles">Documentacion / Papeles</option>
+                  <option value="Repuestos / Fierros">Repuestos / Fierros</option>
+                  <option value="Indumentaria / Ropa">Indumentaria / Ropa</option>
+                  <option value="Comida / Cadeteria">Comida / Cadeteria</option>
+                  <option value="Llaves / Objetos chicos">Llaves / Objetos chicos</option>
+                  <option value="Otro (Aclarar en notas)">Otro (Aclarar en notas)</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-2.5">
               {CATEGORIAS_BULTO.map((b) => {
                 const isActive = bultoId === b.id;
@@ -903,23 +844,24 @@ _Aviso: El precio final puede variar si hay demoras extras o cambios en la ruta.
             </div>
           </div>
 
-          {/* BOTÓN WHATSAPP */}
+          {/* DISCLAIMER */}
+          <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3">
+            <p className="text-xs text-amber-400/90 leading-relaxed">
+              <span className="font-bold">Aviso:</span> El precio mostrado es estimado y referencial. El valor final se coordinara con el chofer al confirmar el viaje, ya que puede variar por kilometros reales, demoras en puerta o modificaciones en la ruta.
+            </p>
+          </div>
+
+          {/* BOTON WHATSAPP */}
           <button
             type="submit"
             onClick={handleSubmit}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-bold py-4 px-6 rounded-2xl flex items-center justify-center transition-all duration-200 shadow-[0_10px_20px_-10px_rgba(16,185,129,0.3)] select-none text-base"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] cursor-pointer text-zinc-950 font-extrabold py-4 px-6 rounded-2xl flex items-center justify-center transition-all duration-200 shadow-[0_10px_20px_-10px_rgba(16,185,129,0.3)] select-none text-sm md:text-base tracking-wide"
           >
-            {/* WhatsApp Premium Icon */}
-            <svg className="w-5 h-5 mr-2.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            <svg className="w-5 h-5 mr-2.5 fill-current shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            CONFIRMAR Y ENVIAR POR WHATSAPP 📱
+            CONFIRMAR Y COORDINAR POR WHATSAPP
           </button>
-
-          {/* AVISO LEGAL / NOTA */}
-          <span className="text-[10px] text-zinc-500 text-center leading-relaxed block mt-1">
-            Aviso: El precio final puede variar si hay demoras extras en el lugar o cambios en la ruta de viaje.
-          </span>
         </div>
         
       </div>
